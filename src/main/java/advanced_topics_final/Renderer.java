@@ -88,8 +88,11 @@ public class Renderer {
             if(drawEnd >= HEIGHT)drawEnd = HEIGHT-1;
             context.strokeLine(x*RESOLUTION, drawStart*RESOLUTION, x*RESOLUTION, drawEnd*RESOLUTION);
             context.setStroke(Color.GREEN);
-            /*for(Entity e : GameManager.entities){
-                Vector2 l = Vector2.Addition(e.position, Vector2.Multiplication(e.left(camera),e.dimensions.x)), r = Vector2.Subtraction(e.position,  Vector2.Multiplication(e.left(camera),e.dimensions.x));
+            for(Entity e : GameManager.entities){
+                e.rotation = lookAt(e.position,camera.position, e.rotation);
+                Vector2 entityForward = e.forward();
+                Vector2 entityLeft = new Vector2(entityForward.y, entityForward.x);
+                Vector2 l = Vector2.Addition(e.position, Vector2.Multiplication(entityLeft,e.dimensions.x)), r = Vector2.Subtraction(e.position,  Vector2.Multiplication(entityLeft,e.dimensions.x));
                 Vector2 ray = new Vector2((float)Math.cos(pangle), (float)Math.sin(pangle));
                 Vector2 intersectionPt = rayIntersectsLineSegment(camera.position, ray, l, r);
                 if(intersectionPt!=null){
@@ -103,7 +106,7 @@ public class Renderer {
                         context.strokeLine(x*RESOLUTION, drawStart*RESOLUTION, x*RESOLUTION, drawEnd*RESOLUTION);
                     }
                 }
-            }*/
+            }
 
             pangle=FixAng(pangle + incrementAng);
         }             
@@ -127,6 +130,30 @@ public class Renderer {
 
     private static float FixAng(float ang){
         if(ang>2*PI){ ang-=2*PI;} if(ang<0){ ang+=(2*PI);} return ang;
+    }
+    public static float lookAt(Vector2 observer, Vector2 target, float currentRotation) {
+        // Calculate the difference in position between observer and target
+        Vector2 diff = Vector2.Subtraction(target, observer);
+    
+        // Calculate the angle between observer and target
+        float targetRotation = (float) Math.toDegrees(Math.atan2(diff.y, diff.x));
+    
+        // Normalize the angle to be in the range [0, 360)
+        if (targetRotation < 0) {
+            targetRotation += 360;
+        }
+    
+        // Calculate the rotation needed to look at the target
+        float rotation = targetRotation - 90 - currentRotation;
+    
+        // Normalize the rotation to be in the range (-180, 180]
+        if (rotation <= -180) {
+            rotation += 360;
+        } else if (rotation > 180) {
+            rotation -= 360;
+        }
+    
+        return rotation;
     }
     
 
