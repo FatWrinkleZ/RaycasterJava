@@ -67,12 +67,12 @@ public class Renderer {
                     sideDistX += deltaDistX;
                     MAPx += stepX;
                     side = 0;
-                    context.setStroke(Color.BLUE);
+                    context.setStroke(Color.RED);
                 }else{
                     sideDistY += deltaDistY;
                     MAPy+=stepY;
                     side = 1;
-                    context.setStroke(Color.DARKGRAY);
+                    context.setStroke(Color.DARKRED);
                 }
                 if(MAPx >= GameManager.MAP.length || MAPy >= GameManager.MAP[0].length || GameManager.MAP[MAPx][MAPy]!=0){
                     hit = 1;
@@ -90,15 +90,15 @@ public class Renderer {
             context.setStroke(Color.GREEN);
             for(Entity e : GameManager.entities){
                 e.rotation = lookAt(e.position,camera.position, e.rotation);
-                Vector2 entityForward = e.forward();
-                Vector2 entityLeft = new Vector2(entityForward.y, entityForward.x);
-                Vector2 l = Vector2.Addition(e.position, Vector2.Multiplication(entityLeft,e.dimensions.x)), r = Vector2.Subtraction(e.position,  Vector2.Multiplication(entityLeft,e.dimensions.x));
+                Vector2 entityRight = e.right();
+                Vector2 l = Vector2.Addition(e.position, Vector2.Multiplication(entityRight,e.dimensions.x)), r = Vector2.Subtraction(e.position,  Vector2.Multiplication(entityRight,e.dimensions.x));
                 Vector2 ray = new Vector2((float)Math.cos(pangle), (float)Math.sin(pangle));
                 Vector2 intersectionPt = rayIntersectsLineSegment(camera.position, ray, l, r);
                 if(intersectionPt!=null){
                     float dist = Vector2.Distance(camera.position, intersectionPt);
                     if(dist < perpWallDist){
-                        lineHeight = HEIGHT/(dist*1000);
+                        lineHeight = (HEIGHT/(dist))*e.dimensions.y;
+                        //lineHeight = e.dimensions.y;
                         drawStart = -lineHeight/2+HEIGHT/2;
                         if(drawStart < 0)drawStart = 0;
                         drawEnd = lineHeight /2 + HEIGHT /2;
