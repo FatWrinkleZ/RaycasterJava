@@ -9,8 +9,12 @@ public class Renderer {
     private static final float WIDTH = App.WIDTH/RESOLUTION;
     private static final float HEIGHT = App.HEIGHT/RESOLUTION;
     public static void Raycast(GraphicsContext context, Camera camera){
-        context.setFill(Color.BLACK);
-        context.fillRect(0,0,App.WIDTH, App.HEIGHT);
+        context.setFill(Color.SKYBLUE);
+        context.fillRect(0, 0, App.WIDTH, App.HEIGHT);
+        context.setFill(Color.BROWN);
+        context.fillRect(0, App.HEIGHT/2, App.WIDTH, App.HEIGHT/2);
+        //context.setFill(Color.BLACK);
+        //context.fillRect(0,0,App.WIDTH, App.HEIGHT);
         context.setLineWidth(RESOLUTION+1);
         CastRay(context, camera);
         context.setStroke(Color.WHITE);
@@ -90,44 +94,57 @@ public class Renderer {
             context.strokeLine(x*RESOLUTION, drawStart*RESOLUTION, x*RESOLUTION, drawEnd*RESOLUTION);
             context.setStroke(Color.GREEN);
             context.setFill(Color.GREEN);
+
             for (Entity e : GameManager.entities) {
-                Vector2 diff = Vector2.Subtraction(e.position, camera.position);
-                float dist = diff.Magnitude();
-                float entityAngle = (float) Math.atan2(diff.y, diff.x) - rotationInRads;
+                e.rotation = camera.rotation;
             
-                // Keep the angle between -PI and PI
-                while (entityAngle > PI) {
-                    entityAngle -= 2 * PI;
-                }
-                while (entityAngle < -PI) {
-                    entityAngle += 2 * PI;
-                }
+                Vector2 offset = Vector2.Multiplication(e.right(), e.dimensions.x);
+                Vector2 l = Vector2.Addition(e.position, offset);
+                Vector2 r = Vector2.Subtraction(e.position, offset);
             
-                Vector2 l = Vector2.Addition(e.position, Vector2.Multiplication(e.right(), e.dimensions.x));
-                Vector2 r = Vector2.Subtraction(e.position, Vector2.Multiplication(e.right(), e.dimensions.x));
+                Vector2 lDirection = Vector2.Subtraction(l, camera.position);
+                Vector2 rDirection = Vector2.Subtraction(r, camera.position);
             
-                float entityScreenSpaceXLeft = (float) (WIDTH / 2) * (1 + ((float) Math.atan2(Vector2.Subtraction(l, camera.position).y, Vector2.Subtraction(l, camera.position).x) - rotationInRads) / fovInRads);
-                float entityScreenSpaceXRight = (float) (WIDTH / 2) * (1 + ((float) Math.atan2(Vector2.Subtraction(r, camera.position).y, Vector2.Subtraction(r, camera.position).x) - rotationInRads) / fovInRads);
+                float lAngle = FixAng((float) Math.atan2(lDirection.y, lDirection.x));
+                float rAngle = FixAng((float) Math.atan2(rDirection.y, rDirection.x));
             
-                if (dist < actWallDist) {
-                    lineHeight = (HEIGHT * e.dimensions.y) / dist;
+                if (IsAngleBetween(pangle, lAngle, rAngle)) {
+                    float dist = Vector2.Distance(camera.position, e.position);
+                    if (dist < actWallDist) {
+                        float entityHeight = e.dimensions.y * (HEIGHT / dist);
+                        lineHeight = entityHeight;
             
-                    drawStart = (HEIGHT / 2) - (lineHeight / 2);
-                    drawEnd = (HEIGHT / 2) + (lineHeight / 2);
-            
-                    if (drawStart < 0) drawStart = 0;
-                    if (drawEnd >= HEIGHT) drawEnd = HEIGHT - 1;
-            
-                    for (int _x = (int) entityScreenSpaceXLeft; _x <= entityScreenSpaceXRight; _x++) {
-                        context.strokeLine(_x * RESOLUTION, drawStart * RESOLUTION, _x * RESOLUTION, drawEnd * RESOLUTION);
+                        drawStart = -lineHeight / 2 + HEIGHT / 2;
+                        if (drawStart < 0) drawStart = 0;
+                        drawEnd = lineHeight / 2 + HEIGHT / 2;
+                        if (drawEnd >= HEIGHT) drawEnd = HEIGHT - 1;
+                        context.strokeLine(x * RESOLUTION, drawStart * RESOLUTION, x * RESOLUTION, drawEnd * RESOLUTION);
                     }
                 }
             }
             
-            
             pangle=FixAng(pangle + incrementAng);
         }             
     }
+    
+    public static float rayIntersectsLineSegment2(Vector2 rayOrigin, Vector2 rayDirection, Vector2 lineSegmentStart, Vector2 lineSegmentEnd) {
+        Vector2 segmentDirection = Vector2.Subtraction(lineSegmentEnd, lineSegmentStart);
+        Vector2 segmentOriginToRayOrigin = Vector2.Subtraction(rayOrigin, lineSegmentStart);
+    
+        float crossProduct = Vector2.cross(rayDirection, segmentDirection);
+        if (Math.abs(crossProduct) < 1e-8) { // if parallel
+            return -1;
+        }
+    
+        float t1 = Vector2.cross(segmentOriginToRayOrigin, segmentDirection) / crossProduct;
+        float t2 = Vector2.cross(segmentOriginToRayOrigin, rayDirection) / crossProduct;
+        if (t1 >= 0.001 && t2 >= 0 && t2 <= 1) {
+            return t1;
+        }
+        return -1;
+    }
+    
+
     public static Vector2 rayIntersectsLineSegment(Vector2 rayOrigin, Vector2 rayDirection, Vector2 lineSegmentStart, Vector2 lineSegmentEnd) {
         Vector2 segmentDirection = Vector2.Subtraction(lineSegmentEnd, lineSegmentStart);
         Vector2 segmentOriginToRayOrigin = Vector2.Subtraction(rayOrigin, lineSegmentStart);
@@ -144,6 +161,11 @@ public class Renderer {
             return Vector2.Addition(rayOrigin, Vector2.Multiplication(rayDirection, t1));
         }
         return null;
+    }
+    private static boolean IsAngleBetween(float target, float angle1, float angle2) {
+        float diff1 = FixAng(angle1 - target);
+        float diff2 = FixAng(angle2 - target);
+        return diff1 * diff2 <= 0;
     }
     
     private static float FixAng(float ang){
