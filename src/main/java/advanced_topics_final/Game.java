@@ -23,7 +23,7 @@ public class Game extends Group implements EventHandler<KeyEvent>{
     public Game(int sceneWidth, int sceneHeight){
         cam.position = new Vector2(3, 3);
         cam.rotation = 45;
-        cam.fov=60;
+        cam.fov=90;
         cam.InitCameraPlane();
         canvas = new Canvas(sceneWidth,sceneHeight);
         context = canvas.getGraphicsContext2D();
@@ -59,10 +59,10 @@ public class Game extends Group implements EventHandler<KeyEvent>{
         Vector2 moveVec = new Vector2(cam.position.x, cam.position.y);
         if(key == KeyCode.W){moveVec.x += 0.1f*Math.cos(Math.toRadians(cam.rotation)); moveVec.y += 0.1f*Math.sin(Math.toRadians(cam.rotation));}
         if(key == KeyCode.S){moveVec.x -= 0.1f*Math.cos(Math.toRadians(cam.rotation)); moveVec.y -= 0.1f*Math.sin(Math.toRadians(cam.rotation));}
-        if(GameManager.MAP[(int)(moveVec.x+0.5f)][(int)cam.position.y]==0){
+        if(GameManager.MAP[(int)(moveVec.x)][(int)cam.position.y]==0){
             cam.position.x = moveVec.x;
         }
-        if(GameManager.MAP[(int)cam.position.x][(int)(moveVec.y+0.5f)]!=1){
+        if(GameManager.MAP[(int)cam.position.x][(int)(moveVec.y)]==0){
             cam.position.y = moveVec.y;
         }
         for(Entity e : GameManager.entities){

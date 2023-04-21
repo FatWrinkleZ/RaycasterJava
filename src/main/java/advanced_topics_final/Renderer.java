@@ -4,7 +4,7 @@ import advanced_topics_final.numerics.Vector2;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.paint.Color;
 public class Renderer {
-    public static final float RESOLUTION = 10;
+    public static final float RESOLUTION = 2;
     private static final float PI = (float)Math.PI;
     private static final float WIDTH = App.WIDTH/RESOLUTION;
     private static final float HEIGHT = App.HEIGHT/RESOLUTION;
@@ -76,7 +76,12 @@ public class Renderer {
                 }
             }
             float perpWallDist = (side == 0) ? (sideDistX - deltaDistX) : sideDistY-deltaDistY;
-            
+            float actWallDist = 0;
+            if (side == 0) {
+                actWallDist = Math.abs((MAPx - px + (1 - stepX) / 2) / rayDirX);
+            } else {
+                actWallDist = Math.abs((MAPy - py + (1 - stepY) / 2) / rayDirY);
+            }
             float lineHeight = HEIGHT/perpWallDist;
             float drawStart = -lineHeight/2+HEIGHT/2;
             if(drawStart < 0)drawStart = 0;
@@ -85,34 +90,29 @@ public class Renderer {
             context.strokeLine(x*RESOLUTION, drawStart*RESOLUTION, x*RESOLUTION, drawEnd*RESOLUTION);
             context.setStroke(Color.GREEN);
             context.setFill(Color.GREEN);
-            for (Entity e : GameManager.entities) {
-                e.lookAt(camera.position);
+            for(Entity e: GameManager.entities){
+                float entityAngle = pangle + (incrementAng * x);
+                rayDir = new Vector2((float)Math.cos(entityAngle), (float)Math.sin(entityAngle));
+                Vector2 l = Vector2.Addition(e.position, Vector2.Multiplication(e.right(), e.dimensions.x));
+                Vector2 r = Vector2.Subtraction(e.position, Vector2.Multiplication(e.right(), e.dimensions.x));
+                Vector2 intersectionPoint = rayIntersectsLineSegment(camera.position, rayDir, r, l);
+                if(intersectionPoint!=null){
+                    Vector2 diff = Vector2.Subtraction(e.position, camera.position);
+                    float dist = diff.Magnitude();
             
-                Vector2 cameraToEntity = Vector2.Subtraction(e.position, camera.position);
-                float distanceToEntity = Vector2.Distance(camera.position, e.position);
+                    if(dist < actWallDist){
+                        float entityHeight = e.dimensions.y * (HEIGHT / dist);
+                        lineHeight = entityHeight;
             
-                float angleBetweenRayAndEntity = Vector2.angleBetweenVectors(rayDir, cameraToEntity);
-            
-                if (angleBetweenRayAndEntity < fovInRads / 2) {
-                    Vector2 l = Vector2.Addition(e.position, Vector2.Multiplication(e.right(), e.dimensions.x));
-                    Vector2 r = Vector2.Subtraction(e.position, Vector2.Multiplication(e.right(), e.dimensions.x));
-                    Vector2 intersectionPoint = rayIntersectsLineSegment(camera.position, rayDir, r, l);
-            
-                    if (intersectionPoint != null) {
-                        float dist = Vector2.Distance(camera.position, intersectionPoint);
-                        float entityDist = Vector2.Distance(intersectionPoint, e.position);
-            
-                        if (dist < perpWallDist && entityDist < e.dimensions.x / 2) {
-                            lineHeight = HEIGHT / (distanceToEntity);
-                            drawStart = -lineHeight / 2 + HEIGHT / 2;
-                            if (drawStart < 0) drawStart = 0;
-                            drawEnd = lineHeight / 2 + HEIGHT / 2;
-                            if (drawEnd >= HEIGHT) drawEnd = HEIGHT - 1;
-                            context.strokeLine(x * RESOLUTION, drawStart * RESOLUTION, x * RESOLUTION, drawEnd * RESOLUTION);
-                        }
+                        drawStart = -lineHeight/2+HEIGHT/2;
+                        if(drawStart < 0)drawStart = 0;
+                        drawEnd = lineHeight /2 + HEIGHT /2;
+                        if(drawEnd >= HEIGHT)drawEnd = HEIGHT-1;
+                        context.strokeLine(x*RESOLUTION, drawStart*RESOLUTION, x*RESOLUTION, drawEnd*RESOLUTION);
                     }
                 }
             }
+            
             
             pangle=FixAng(pangle + incrementAng);
         }             
