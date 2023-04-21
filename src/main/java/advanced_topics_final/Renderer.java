@@ -90,25 +90,36 @@ public class Renderer {
             context.strokeLine(x*RESOLUTION, drawStart*RESOLUTION, x*RESOLUTION, drawEnd*RESOLUTION);
             context.setStroke(Color.GREEN);
             context.setFill(Color.GREEN);
-            for(Entity e: GameManager.entities){
-                float entityAngle = pangle + (incrementAng * x);
-                rayDir = new Vector2((float)Math.cos(entityAngle), (float)Math.sin(entityAngle));
+            for (Entity e : GameManager.entities) {
+                Vector2 diff = Vector2.Subtraction(e.position, camera.position);
+                float dist = diff.Magnitude();
+                float entityAngle = (float) Math.atan2(diff.y, diff.x) - rotationInRads;
+            
+                // Keep the angle between -PI and PI
+                while (entityAngle > PI) {
+                    entityAngle -= 2 * PI;
+                }
+                while (entityAngle < -PI) {
+                    entityAngle += 2 * PI;
+                }
+            
                 Vector2 l = Vector2.Addition(e.position, Vector2.Multiplication(e.right(), e.dimensions.x));
                 Vector2 r = Vector2.Subtraction(e.position, Vector2.Multiplication(e.right(), e.dimensions.x));
-                Vector2 intersectionPoint = rayIntersectsLineSegment(camera.position, rayDir, r, l);
-                if(intersectionPoint!=null){
-                    Vector2 diff = Vector2.Subtraction(e.position, camera.position);
-                    float dist = diff.Magnitude();
             
-                    if(dist < actWallDist){
-                        float entityHeight = e.dimensions.y * (HEIGHT / dist);
-                        lineHeight = entityHeight;
+                float entityScreenSpaceXLeft = (float) (WIDTH / 2) * (1 + ((float) Math.atan2(Vector2.Subtraction(l, camera.position).y, Vector2.Subtraction(l, camera.position).x) - rotationInRads) / fovInRads);
+                float entityScreenSpaceXRight = (float) (WIDTH / 2) * (1 + ((float) Math.atan2(Vector2.Subtraction(r, camera.position).y, Vector2.Subtraction(r, camera.position).x) - rotationInRads) / fovInRads);
             
-                        drawStart = -lineHeight/2+HEIGHT/2;
-                        if(drawStart < 0)drawStart = 0;
-                        drawEnd = lineHeight /2 + HEIGHT /2;
-                        if(drawEnd >= HEIGHT)drawEnd = HEIGHT-1;
-                        context.strokeLine(x*RESOLUTION, drawStart*RESOLUTION, x*RESOLUTION, drawEnd*RESOLUTION);
+                if (dist < actWallDist) {
+                    lineHeight = (HEIGHT * e.dimensions.y) / dist;
+            
+                    drawStart = (HEIGHT / 2) - (lineHeight / 2);
+                    drawEnd = (HEIGHT / 2) + (lineHeight / 2);
+            
+                    if (drawStart < 0) drawStart = 0;
+                    if (drawEnd >= HEIGHT) drawEnd = HEIGHT - 1;
+            
+                    for (int _x = (int) entityScreenSpaceXLeft; _x <= entityScreenSpaceXRight; _x++) {
+                        context.strokeLine(_x * RESOLUTION, drawStart * RESOLUTION, _x * RESOLUTION, drawEnd * RESOLUTION);
                     }
                 }
             }

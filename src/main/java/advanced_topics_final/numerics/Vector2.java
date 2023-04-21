@@ -16,6 +16,11 @@ public class Vector2 {
     public static Vector2 Multiplication(Vector2 vec1, Vector2 vec2){return new Vector2(vec1.x*vec2.x, vec1.y * vec2.y);}
     public static Vector2 Multiplication(Vector2 vec, float mult){return new Vector2(vec.x*mult, vec.y*mult);}
 
+    public void Divide(Vector2 vec){x/=vec.x;y/=vec.y;}
+    public void Divide(float mult){x/=mult; y/= mult;}
+    public static Vector2 Division(Vector2 vec1, Vector2 vec2){return new Vector2(vec1.x/vec2.x, vec1.y / vec2.y);}
+    public static Vector2 Division(Vector2 vec, float mult){return new Vector2(vec.x/mult, vec.y/mult);}
+
     public static float cross(Vector2 a, Vector2 b) {
         return a.x * b.y - a.y * b.x;
     }
