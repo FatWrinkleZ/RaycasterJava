@@ -85,27 +85,35 @@ public class Renderer {
             context.strokeLine(x*RESOLUTION, drawStart*RESOLUTION, x*RESOLUTION, drawEnd*RESOLUTION);
             context.setStroke(Color.GREEN);
             context.setFill(Color.GREEN);
-            for(Entity e: GameManager.entities){
-                rayDir = new Vector2((float)Math.cos(pangle), (float)Math.sin(pangle));
-                e.rotation = lookAt(e.position, camera.position, e.rotation);
-                Vector2 l = Vector2.Addition(e.position, Vector2.Multiplication(e.right(), e.dimensions.x)), r = Vector2.Subtraction(e.position, Vector2.Multiplication(e.right(),e.dimensions.x));
-                Vector2 intersectionPoint = rayIntersectsLineSegment(camera.position, rayDir, r, l);
-                if(intersectionPoint!=null){
-                    Vector2 diff = Vector2.Subtraction(intersectionPoint, camera.position);
-                    float dist = Math.abs(Vector2.dot(diff, rayDir) / rayDir.Magnitude());
-
-                    if(dist < perpWallDist){
-                        lineHeight = HEIGHT / (dist);
-
-                        drawStart = -lineHeight/2+HEIGHT/2;
-                        if(drawStart < 0)drawStart = 0;
-                        drawEnd = lineHeight /2 + HEIGHT /2;
-                        if(drawEnd >= HEIGHT)drawEnd = HEIGHT-1;
-                        context.strokeLine(x*RESOLUTION, drawStart*RESOLUTION, x*RESOLUTION, drawEnd*RESOLUTION);
+            for (Entity e : GameManager.entities) {
+                e.lookAt(camera.position);
+            
+                Vector2 cameraToEntity = Vector2.Subtraction(e.position, camera.position);
+                float distanceToEntity = Vector2.Distance(camera.position, e.position);
+            
+                float angleBetweenRayAndEntity = Vector2.angleBetweenVectors(rayDir, cameraToEntity);
+            
+                if (angleBetweenRayAndEntity < fovInRads / 2) {
+                    Vector2 l = Vector2.Addition(e.position, Vector2.Multiplication(e.right(), e.dimensions.x));
+                    Vector2 r = Vector2.Subtraction(e.position, Vector2.Multiplication(e.right(), e.dimensions.x));
+                    Vector2 intersectionPoint = rayIntersectsLineSegment(camera.position, rayDir, r, l);
+            
+                    if (intersectionPoint != null) {
+                        float dist = Vector2.Distance(camera.position, intersectionPoint);
+                        float entityDist = Vector2.Distance(intersectionPoint, e.position);
+            
+                        if (dist < perpWallDist && entityDist < e.dimensions.x / 2) {
+                            lineHeight = HEIGHT / (distanceToEntity);
+                            drawStart = -lineHeight / 2 + HEIGHT / 2;
+                            if (drawStart < 0) drawStart = 0;
+                            drawEnd = lineHeight / 2 + HEIGHT / 2;
+                            if (drawEnd >= HEIGHT) drawEnd = HEIGHT - 1;
+                            context.strokeLine(x * RESOLUTION, drawStart * RESOLUTION, x * RESOLUTION, drawEnd * RESOLUTION);
+                        }
                     }
                 }
             }
-
+            
             pangle=FixAng(pangle + incrementAng);
         }             
     }
@@ -130,11 +138,7 @@ public class Renderer {
     private static float FixAng(float ang){
         if(ang>2*PI){ ang-=2*PI;} if(ang<0){ ang+=(2*PI);} return ang;
     }
-    public static float lookAt(Vector2 observer, Vector2 target, float currentRotation) {
-        Vector2 diff = Vector2.Subtraction(target, observer);
-        float targetRotation = (float) Math.toDegrees(Math.atan2(diff.y, diff.x));
-        return targetRotation;
-    }
+
     public static float clamp(float value, float min, float max) {
         return Math.max(min, Math.min(max, value));
     }

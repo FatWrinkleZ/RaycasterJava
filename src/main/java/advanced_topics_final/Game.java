@@ -65,6 +65,9 @@ public class Game extends Group implements EventHandler<KeyEvent>{
         if(GameManager.MAP[(int)cam.position.x][(int)(moveVec.y+0.5f)]!=1){
             cam.position.y = moveVec.y;
         }
+        for(Entity e : GameManager.entities){
+            e.lookAt(cam);
+        }
         //cam.UpdateCameraPlane();
     }
     

@@ -40,6 +40,13 @@ public class Vector2 {
         }
         return new Vector2(0, 0);
     }
+    public static float angleBetweenVectors(Vector2 v1, Vector2 v2) {
+        float dot = Vector2.dot(v1, v2);
+        float v1Magnitude = v1.Magnitude();
+        float v2Magnitude = v2.Magnitude();
+        return (float) Math.toDegrees(Math.acos(dot / (v1Magnitude * v2Magnitude)));
+    }
+    
     
 
 }
