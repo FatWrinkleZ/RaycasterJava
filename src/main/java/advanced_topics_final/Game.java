@@ -57,8 +57,8 @@ public class Game extends Group implements EventHandler<KeyEvent>{
         if(cam.rotation > 360){cam.rotation -= 360;}
         if(cam.rotation < 0){cam.rotation += 360;}
         Vector2 moveVec = new Vector2(cam.position.x, cam.position.y);
-        if(key == KeyCode.W){moveVec.x += 0.1f*Math.cos(Math.toRadians(cam.rotation)); cam.position.y += 0.1f*Math.sin(Math.toRadians(cam.rotation));}
-        if(key == KeyCode.S){moveVec.x -= 0.1f*Math.cos(Math.toRadians(cam.rotation)); cam.position.y -= 0.1f*Math.sin(Math.toRadians(cam.rotation));}
+        if(key == KeyCode.W){moveVec.x += 0.1f*Math.cos(Math.toRadians(cam.rotation)); moveVec.y += 0.1f*Math.sin(Math.toRadians(cam.rotation));}
+        if(key == KeyCode.S){moveVec.x -= 0.1f*Math.cos(Math.toRadians(cam.rotation)); moveVec.y -= 0.1f*Math.sin(Math.toRadians(cam.rotation));}
         if(GameManager.MAP[(int)(moveVec.x+0.5f)][(int)cam.position.y]==0){
             cam.position.x = moveVec.x;
         }

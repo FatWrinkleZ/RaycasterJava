@@ -30,22 +30,18 @@ public class Renderer {
         rotationInRads = FixAng(rotationInRads);
         float pangle = rotationInRads - (fovInRads/2f);
         float incrementAng = fovInRads/WIDTH;
-        //pangle=FixAng(pangle * PI/180.0f);
+        camera.UpdateCameraPlane(rotationInRads);
         for(int x = 0; x < WIDTH; x++){
-            camera.UpdateCameraPlane(pangle);
+            //camera.UpdateCameraPlane(pangle);
             int MAPx = (int)px;
             int MAPy = (int)py;
             float sideDistX, sideDistY;
-            //float cameraX = 2 * x / (float)WIDTH-1;
-            //float rayDirX = (float)Math.cos(pangle) + 0.66f * cameraX;
-            //float rayDirY = (float)Math.sin(pangle) + 0.66f * cameraX;
             float cameraX = 2 * x / (float) WIDTH - 1;
             float rayDirX = (float) (Math.cos(pangle) + camera.cameraPlane.x * cameraX);
             float rayDirY = (float) (Math.sin(pangle) + camera.cameraPlane.y * cameraX);
             float deltaDistX = (float)((rayDirX == 0) ? 0 : Math.abs(1.0f / rayDirX));
             float deltaDistY = (float)((rayDirY == 0) ? 0 : Math.abs(1.0f / rayDirY));
-
-
+            Vector2 rayDir = new Vector2(rayDirX,rayDirY);
             int stepX, stepY;
             int hit = 0, side=0;
             if(rayDirX < 0){
@@ -88,17 +84,19 @@ public class Renderer {
             if(drawEnd >= HEIGHT)drawEnd = HEIGHT-1;
             context.strokeLine(x*RESOLUTION, drawStart*RESOLUTION, x*RESOLUTION, drawEnd*RESOLUTION);
             context.setStroke(Color.GREEN);
-            for(Entity e : GameManager.entities){
-                e.rotation = lookAt(e.position,camera.position, e.rotation);
-                Vector2 entityRight = e.right();
-                Vector2 l = Vector2.Addition(e.position, Vector2.Multiplication(entityRight,e.dimensions.x)), r = Vector2.Subtraction(e.position,  Vector2.Multiplication(entityRight,e.dimensions.x));
-                Vector2 ray = new Vector2((float)Math.cos(pangle), (float)Math.sin(pangle));
-                Vector2 intersectionPt = rayIntersectsLineSegment(camera.position, ray, l, r);
-                if(intersectionPt!=null){
-                    float dist = Vector2.Distance(camera.position, intersectionPt);
+            context.setFill(Color.GREEN);
+            for(Entity e: GameManager.entities){
+                rayDir = new Vector2((float)Math.cos(pangle), (float)Math.sin(pangle));
+                e.rotation = lookAt(e.position, camera.position, e.rotation);
+                Vector2 l = Vector2.Addition(e.position, Vector2.Multiplication(e.right(), e.dimensions.x)), r = Vector2.Subtraction(e.position, Vector2.Multiplication(e.right(),e.dimensions.x));
+                Vector2 intersectionPoint = rayIntersectsLineSegment(camera.position, rayDir, r, l);
+                if(intersectionPoint!=null){
+                    Vector2 diff = Vector2.Subtraction(intersectionPoint, camera.position);
+                    float dist = Math.abs(Vector2.dot(diff, rayDir) / rayDir.Magnitude());
+
                     if(dist < perpWallDist){
-                        lineHeight = (HEIGHT/(dist))*e.dimensions.y;
-                        //lineHeight = e.dimensions.y;
+                        lineHeight = HEIGHT / (dist);
+
                         drawStart = -lineHeight/2+HEIGHT/2;
                         if(drawStart < 0)drawStart = 0;
                         drawEnd = lineHeight /2 + HEIGHT /2;
@@ -111,49 +109,34 @@ public class Renderer {
             pangle=FixAng(pangle + incrementAng);
         }             
     }
-
     public static Vector2 rayIntersectsLineSegment(Vector2 rayOrigin, Vector2 rayDirection, Vector2 lineSegmentStart, Vector2 lineSegmentEnd) {
         Vector2 segmentDirection = Vector2.Subtraction(lineSegmentEnd, lineSegmentStart);
+        Vector2 segmentOriginToRayOrigin = Vector2.Subtraction(rayOrigin, lineSegmentStart);
+    
         float crossProduct = Vector2.cross(rayDirection, segmentDirection);
-        if (crossProduct == 0) {
+        if (Math.abs(crossProduct) < 1e-8) { // if parallel
             return null;
         }
-        Vector2 startToRayOrigin = Vector2.Subtraction(rayOrigin, lineSegmentStart);
-        float t = Vector2.cross(startToRayOrigin, segmentDirection) / crossProduct;
-        if (t < 0 || t > 1) {
-            return null;
+    
+        float t1 = Vector2.cross(segmentOriginToRayOrigin, segmentDirection) / crossProduct;
+        float t2 = Vector2.cross(segmentOriginToRayOrigin, rayDirection) / crossProduct;
+    
+        if (t1 >= 0.001 && t2 >= 0 && t2 <= 1) {
+            return Vector2.Addition(rayOrigin, Vector2.Multiplication(rayDirection, t1));
         }
-        Vector2 intersectionPoint = Vector2.Addition(rayOrigin, Vector2.Multiplication(rayDirection, t));
-        return intersectionPoint;
+        return null;
     }
     
-
     private static float FixAng(float ang){
         if(ang>2*PI){ ang-=2*PI;} if(ang<0){ ang+=(2*PI);} return ang;
     }
     public static float lookAt(Vector2 observer, Vector2 target, float currentRotation) {
-        // Calculate the difference in position between observer and target
         Vector2 diff = Vector2.Subtraction(target, observer);
-    
-        // Calculate the angle between observer and target
         float targetRotation = (float) Math.toDegrees(Math.atan2(diff.y, diff.x));
-    
-        // Normalize the angle to be in the range [0, 360)
-        if (targetRotation < 0) {
-            targetRotation += 360;
-        }
-    
-        // Calculate the rotation needed to look at the target
-        float rotation = targetRotation - 90 - currentRotation;
-    
-        // Normalize the rotation to be in the range (-180, 180]
-        if (rotation <= -180) {
-            rotation += 360;
-        } else if (rotation > 180) {
-            rotation -= 360;
-        }
-    
-        return rotation;
+        return targetRotation;
+    }
+    public static float clamp(float value, float min, float max) {
+        return Math.max(min, Math.min(max, value));
     }
     
 

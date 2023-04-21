@@ -16,19 +16,30 @@ public class Vector2 {
     public static Vector2 Multiplication(Vector2 vec1, Vector2 vec2){return new Vector2(vec1.x*vec2.x, vec1.y * vec2.y);}
     public static Vector2 Multiplication(Vector2 vec, float mult){return new Vector2(vec.x*mult, vec.y*mult);}
 
-    public float Magnitude(){
-        return (float)Math.sqrt(x*x + y*y);
-    }
-
     public static float cross(Vector2 a, Vector2 b) {
         return a.x * b.y - a.y * b.x;
     }
-
+    public float Magnitude(){
+        return (float)Math.sqrt(x*x + y*y);
+    }
     public static float Distance(Vector2 vec1, Vector2 vec2){
         Vector2 diff = Vector2.Subtraction(vec1, vec2);
         return diff.Magnitude();
     }
+    public static float dot(Vector2 vec1, Vector2 vec2) {
+        vec1 = vec1.Normalized();
+        vec2 = vec2.Normalized();
+        return vec1.x * vec2.x + vec1.y * vec2.y;
+    }
     
 
+    public Vector2 Normalized() {
+        float magnitude = Magnitude();
+        if (magnitude != 0) {
+            return new Vector2(x / magnitude, y / magnitude);
+        }
+        return new Vector2(0, 0);
+    }
+    
 
 }
